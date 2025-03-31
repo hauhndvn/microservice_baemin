@@ -1,0 +1,5 @@
+./api_gateway/node_modules
+./service_logistics/node_modules
+./service_order/node_modules
+./service_product/node_modules
+./service_user/node_modules
