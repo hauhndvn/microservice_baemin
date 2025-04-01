@@ -1,9 +1,15 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { PrismaService } from './prisma/prisma.service';
+import { ClientProxy } from '@nestjs/microservices';
+import { RpcException } from '@nestjs/microservices';
+import { error } from 'console';
 
 @Injectable()
 export class AppService {
-  constructor(private prismaService:PrismaService){}
+  constructor(private prismaService:PrismaService,
+   @Inject("LOGISTICS_NAME") private logisticsService: ClientProxy,
+   @Inject("NOTIFY_NAME") private notifyService: ClientProxy,
+  ){}
   async saveOrder(model) {
     let {
       customer_id, 
@@ -11,7 +17,23 @@ export class AppService {
       logistics_name,
       fee, 
       order_items }= model;
+    
+    //kiểm tra số lượng hàng tồn kho
+    try{
+      for (const item of order_items) {
+        const food = await this.prismaService.food.findUnique({
+          where: { food_id: item.food_id },
+          select: { inventory: true },
+        });
       
+        if (!food || food.inventory < item.qty) {
+          throw new RpcException(`Sản phẩm ${item.food_id} không đủ hàng tồn kho`);
+        }
+      }
+    }catch (error) {
+      return error.message;
+    } 
+    
     // Tạo đơn hàng mới
     const created_at = new Date(); 
 
@@ -48,43 +70,41 @@ export class AppService {
         });
         
       // trừ tồn kho: Giảm inventory trong bảng food
-          await this.prismaService.food.update({
-            where: { 
-              food_id: item.food_id,
-              inventory: { gte: item.qty }, // Chỉ giảm nếu inventory >= qty
-            },
-            data: { inventory: { decrement: item.qty } },
-            });
+        await this.prismaService.food.update({
+          where: { food_id: item.food_id },
+          data: { inventory: { decrement: item.qty } },
+        });
       }
     );
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //------------------------------------
 
-    // gọi service_logistics để lưu dữ liệu vào bảng logistics
+    
     // Lấy thông tin khách hàng từ bảng customer
     const customer = await this.prismaService.customer.findUnique({
       where: { customer_id },
       select: { email: true, phone: true, address: true, surname: true, name: true },
     });
-    
+    //gọi service_notify để gửi email xác nhận đơn --> sendMailOrder(data)
+    this.notifyService.emit("send_email_order", { email:customer.email })
+    // gọi service_logistics để lưu dữ liệu vào bảng logistics
     if (logistics_name && fee && customer) {
-      await this.prismaService.logistics.create({
-        data: {
-          order_id: newOrder.order_id,
-          logistics_name,
-          fee,
-          start_date: new Date(), 
-          expected_end_date: new Date(new Date().setHours(new Date().getHours() + 2)), // Cộng thêm 2 giờ
-          surname: customer.surname,
-          name: customer.name,
-          email: customer.email,
-          address: customer.address,
-          phone: customer.phone,
-          total_payment: total_payment2,
-        },
-      });
-    }
+      this.logisticsService.emit("save_logistic",{
+            order_id: newOrder.order_id,
+            logistics_name,
+            fee,
+            start_date: new Date(), 
+            expected_end_date: new Date(new Date().setHours(new Date().getHours() + 2)), // Cộng thêm 2 giờ
+            surname: customer.surname,
+            name: customer.name,
+            email: customer.email,
+            address: customer.address,
+            phone: customer.phone,
+            total_payment: total_payment2,
+      })
+    };
+
     await Promise.all(orderItemsPromises);
     //------------------------------------
     return {

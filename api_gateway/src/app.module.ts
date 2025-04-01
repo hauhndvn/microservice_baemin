@@ -28,6 +28,18 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
           durable: true
         }
       }
+    },{
+      name: "ORDER_NAME",
+      transport: Transport.RMQ,
+      options: {
+        //url kết nối đến server RabbitMQ
+        urls: ['amqp://admin:1234@localhost:5672'],
+        //tên queue xử lý
+        queue: 'order_queue',
+        queueOptions: {
+          durable: true
+        }
+      }
     }])
   ],    
   controllers: [AppController],

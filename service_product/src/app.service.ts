@@ -1,12 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from './prisma/prisma.service';
 import { PaginationLibsService } from './pagination_libs/pagination_libs.service';
+import { ElasticsearchService } from '@nestjs/elasticsearch';
 
 @Injectable()
 export class AppService {
   constructor(
     private prismaService: PrismaService,
     private readonly paginationService: PaginationLibsService,
+    private elasticService: ElasticsearchService
   ) {}
 
   async findAll(
@@ -140,38 +142,47 @@ async findCategory(category_id: number, featured?: string) {
 }
 
   async findFood(name: string) {
-    const foods = await this.prismaService.food.findMany({
-      where:{
-        name_food:{
-          contains: name //LIKE '%name%'
+    let result = await this.elasticService.search({
+      index: "name_food_index",
+      query:{
+        match:{
+          name_food: name
         }
-      },
-      select: {
-        food_id: true,
-        thumbnail: true,
-        description: true,
-        name_food: true,
-        price: true,
-        inventory: true,
-        featured: true,
-        promotion: true,
-        kind: true,
-        eatery_id: true,
-        category_id: true,
-        eatery: {
-          select: {
-            address: true, // Lấy địa chỉ từ bảng eatery
-          },
-        },
-      },
-    });
-    // Định dạng dữ liệu đầu ra
-    const formattedFoods = foods.map((food) => ({
-      ...food, // Giữ nguyên toàn bộ thông tin của food
-      address: food.eatery.address, // Thêm địa chỉ vào kết quả
-      eatery: undefined, // Xóa key `eatery` thừa trong dữ liệu trả về
-    }));
-    return formattedFoods;
+      }
+    })
+    return result;
+    // const foods = await this.prismaService.food.findMany({
+    //   where:{
+    //     name_food:{
+    //       contains: name //LIKE '%name%'
+    //     }
+    //   },
+    //   select: {
+    //     food_id: true,
+    //     thumbnail: true,
+    //     description: true,
+    //     name_food: true,
+    //     price: true,
+    //     inventory: true,
+    //     featured: true,
+    //     promotion: true,
+    //     kind: true,
+    //     eatery_id: true,
+    //     category_id: true,
+    //     eatery: {
+    //       select: {
+    //         address: true, // Lấy địa chỉ từ bảng eatery
+    //       },
+    //     },
+    //   },
+    // });
+    // // Định dạng dữ liệu đầu ra
+    // const formattedFoods = foods.map((food) => ({
+    //   ...food, // Giữ nguyên toàn bộ thông tin của food
+    //   address: food.eatery.address, // Thêm địa chỉ vào kết quả
+    //   eatery: undefined, // Xóa key `eatery` thừa trong dữ liệu trả về
+    // }));
+    // return formattedFoods;
   }
 
 }

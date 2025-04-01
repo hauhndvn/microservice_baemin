@@ -11,10 +11,12 @@ export class AppController {
     return this.appService.sendMailRegister(data);
   }
 
+  @EventPattern("send_email_order")
   sendMailOrder(@Payload() data) {
     return this.appService.sendMailOrder(data);
   }
 
+  @EventPattern("send_email_success")
   sendMailSuccess(@Payload() data) {
     return this.appService.sendMailSuccess(data);
   }

@@ -52,8 +52,8 @@ export class AppService {
     let infoMail = {
       from: "hau.nguyenduc@gmail.com",
       to: email,
-      subject: "Đặt hàng qua Baemin",
-      html: "<h1 style='color:red'> Đặt hàng thành công </h1>"
+      subject: "Giao hàng Baemin",
+      html: "<h1 style='color:red'> Giao hàng thành công </h1>"
     }
     configMail.sendMail(infoMail, error => error);
   }
