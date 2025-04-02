@@ -9,7 +9,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
       transport: Transport.RMQ,
       options: {
         //url kết nối đến server RabbitMQ
-        urls: ['amqp://admin:1234@localhost:5672'],
+        urls: ['amqp://admin:1234@some-rabbit:5672'],
         //tên queue xử lý
         queue: 'product_queue',
         queueOptions: {
@@ -21,7 +21,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
       transport: Transport.RMQ,
       options: {
         //url kết nối đến server RabbitMQ
-        urls: ['amqp://admin:1234@localhost:5672'],
+        urls: ['amqp://admin:1234@some-rabbit:5672'],
         //tên queue xử lý
         queue: 'user_queue',
         queueOptions: {
@@ -33,7 +33,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
       transport: Transport.RMQ,
       options: {
         //url kết nối đến server RabbitMQ
-        urls: ['amqp://admin:1234@localhost:5672'],
+        urls: ['amqp://admin:1234@some-rabbit:5672'],
         //tên queue xử lý
         queue: 'order_queue',
         queueOptions: {

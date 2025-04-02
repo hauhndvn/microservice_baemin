@@ -19,7 +19,6 @@ export class AppService {
       order_items }= model;
     
     //kiểm tra số lượng hàng tồn kho
-    try{
       for (const item of order_items) {
         const food = await this.prismaService.food.findUnique({
           where: { food_id: item.food_id },
@@ -27,13 +26,13 @@ export class AppService {
         });
       
         if (!food || food.inventory < item.qty) {
-          throw new RpcException(`Sản phẩm ${item.food_id} không đủ hàng tồn kho`);
+          throw new RpcException({
+            statusCode: 401,
+            message: `Sản phẩm ${item.food_id} không đủ hàng tồn kho`
+          });
         }
       }
-    }catch (error) {
-      return error.message;
-    } 
-    
+
     // Tạo đơn hàng mới
     const created_at = new Date(); 
 
