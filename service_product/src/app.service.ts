@@ -143,7 +143,7 @@ async findCategory(category_id: number, featured?: string) {
 
   async findFood(name: string) {
     let result = await this.elasticService.search({
-      index: "name_food_index",
+      index: "food-index",
       query:{
         match:{
           name_food: name
